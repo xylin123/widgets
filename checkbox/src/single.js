@@ -1,0 +1,221 @@
+/**
+ * 针对于表格类的全选框的实现。
+ * 一次性生成一个多选框。
+ * @author xylin
+ */
+'use strict';
+
+// 观察者对象
+var Observer = (function(){
+
+  var __message = {};
+
+  return {
+    // 注册信息
+    regist: function(type, fn){
+      if(typeof __message[type] === 'undefined') {
+        __message[type] = [fn];
+      } else {
+        __message[type].push(fn);
+      }
+      return this;
+    },
+    // 发布信息
+    fire: function(type, args){
+      if(!__message[type]) {
+        return this;
+      }
+      var event = {
+        type: type,
+        args: args || {}
+      },
+      i = 0,
+      len = __message[type].length;
+
+      for(; i < len; i ++) {
+        __message[type][i].call(this, event);
+      }
+      return this;
+    },
+    // 移除信息
+    remove: function(type, fn){
+      if(__message[type] instanceof Array) {
+        var i = __message[type].length - 1;
+        for(; i>= 0; i --) {
+          __message[type][i] === fn && __message[type].splice(i, 1);
+        } 
+      }
+      return this;
+    }
+  }
+
+})();
+
+var index = 1;
+
+/**
+ * 
+ * @param {*} options 包含初始化的配置。
+ */
+var CheckBox = function(options) {
+
+  this._childNum = 0;
+  this._checkedChild = [];
+
+  this.uniquecClass = 'gcb-' + (index++) + '-' + new Date().getTime();
+  this.selector = '.' + this.uniquecClass;
+
+  this.options = options;
+
+}
+
+CheckBox.prototype = {
+  constructor: CheckBox,
+  /**
+   * 创建cbox
+   */
+  create: function(){
+
+    var that = this,
+        htmlStr = '<div class="gcb-wrap ' + that.uniquecClass + '" >'
+                + '<ul>'
+                + '<li data-val="' + that.options.data.val + '" class="' + (that.options.data.checked ? 'checked' : '') + '" >'
+                + '<i></i>' + that.options.data.text
+                + '</li>'
+                + '</ul>'
+                + '</div>';
+    
+    that.options.container.html(htmlStr);
+
+    if(that.options.parent) {
+      if(!(that.options.parent instanceof CheckBox)) {
+        throw new Error('Parent property isn\'t CheckBox');
+      }
+      that.options.parent._child(that);
+      that._parent(that.options.parent);
+    } 
+
+    $(that.selector).on('click', function(){
+
+      var checked = !that.options.data.checked;
+
+      that.check(checked);
+
+      that.options.clickCallback && that.options.clickCallback(data, that.uniquecClass);
+
+      return false;
+
+    });
+
+    return this;
+
+  },
+  /**
+   * 返回cbox是否被选中布尔值
+   * 
+   * @return {boolean} 是否被选中
+   */
+  isChecked: function(){
+    return !!this.options.data.checked;
+  },
+  /**
+   * 返回cbox是否没有被选中布尔值
+   * 
+   * @return {boolean} 是否没被选中
+   */
+  isUnChecked: function(){
+    return !this.isChecked();
+  },
+  /**
+   * 改变cbox的选中状态，并判断是否向父／子box发送消息
+   * 
+   * @param {boolean} checked 是否被选中
+   * @param {boolean} noFire 是否发送消息
+   */
+  check: function(checked, noFire){
+
+    var $li = $(this.selector).find('li');
+
+    this.options.data.checked = checked;
+
+    if(!noFire) {
+      // 发布自身的状态信息。 parent／child 都发布。
+      Observer
+        .fire('child-' + this.uniquecClass + '-check', {checked: checked}) // 向父box发送点击事件消息
+        .fire('parent-' + this.uniquecClass + '-check', {checked: checked});  // 向子box发送点击事件消息
+    }
+
+    checked ? $li.addClass('checked') : $li.removeClass('checked');
+
+    return this;
+
+  },
+  /**
+   * 内部方法。父box注册子box的改变的消息。
+   * 
+   * @param {CheckBox} cbox 子box
+   */
+  _child: function(cbox) {
+
+    // that 是 父box ／ cbox 是子box
+    var that = this;
+    that._childNum ++;
+
+    if( cbox.options.data.checked ) {
+      that._checkedChild.push(cbox.uniquecClass + '-check');
+      (that._childNum == that._checkedChild.length) ? that.check(true) : '';
+    }
+
+    // 注册（订阅）子box的check事件。
+    Observer.regist('child-' + cbox.uniquecClass + '-check', function(e) {
+      // 收到子box的点击事件后调用的函数。
+
+      var childId = e.type.split('-').slice(1).join('-');
+
+      if(e.args.checked) {
+        that._checkedChild.indexOf(childId) > -1 ? '' : that._checkedChild.push(childId);
+      } else {
+        that._checkedChild.indexOf(childId) > -1 ? that._checkedChild.splice(that._checkedChild.indexOf(childId), 1) : '';
+      }
+
+      var checked = (that._checkedChild.length == that._childNum);
+
+      that.check(checked, true);
+
+      // 向 父box 发送点击事件消息
+      Observer.fire('child-' + that.uniquecClass + '-check', {checked: checked});
+
+    });
+
+  },
+  /**
+   * 内部方法。子box注册父box的改变的消息。
+   * 
+   * @param {CheckBox} cbox 父box
+   */
+  _parent: function(cbox) {
+    // cbox 是父box ／ that 是子box
+
+    var that = this;
+
+    // 注册(订阅)父box的check事件
+    Observer.regist('parent-' + cbox.uniquecClass + '-check', function(e) {
+      // 收到父box的点击事件后调用的函数。
+
+      var childId = that.uniquecClass + '-check';
+
+      if(e.args.checked) {
+        cbox._checkedChild.indexOf(childId) > -1 ? '' : cbox._checkedChild.push(childId);
+      } else {
+        cbox._checkedChild.indexOf(childId) > -1 ? cbox._checkedChild.splice(cbox._checkedChild.indexOf(childId), 1) : '';
+      }
+
+      that.check(e.args.checked, true);
+
+      // 向 子box 发送点击事件消息
+      Observer.fire('parent-' + that.uniquecClass + '-check', {checked: e.args.checked});
+
+    });
+
+  }
+}
