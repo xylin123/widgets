@@ -58,14 +58,34 @@ var index = 1;
  * @param {*} options 包含初始化的配置。
  */
 var CheckBox = function(options) {
-
   this._childNum = 0;
   this._checkedChild = [];
 
   this.uniquecClass = 'gcb-' + (index++) + '-' + new Date().getTime();
   this.selector = '.' + this.uniquecClass;
 
-  this.options = options;
+  if (!options.data) {
+    throw new Error('CheckBox中options的data必须存在。');
+  }
+  this.options = {
+    data: options.data,
+    container: options.container || $('body'),
+    parent: options.parent,
+    disabled: options.disabled,
+    clickCallback: options.clickCallback || $.noop
+  }
+
+  var that = this;
+  this.click = function(){
+
+    var checked = !that.options.data.checked;
+
+    that.check(checked);
+
+    that.options.clickCallback && that.options.clickCallback(that.options.data, that.uniquecClass);
+
+    return false;
+  }
 
 }
 
@@ -77,45 +97,65 @@ CheckBox.prototype = {
   create: function(){
 
     var that = this,
-        htmlStr = '<div class="gcb-wrap ' + that.uniquecClass + '" >'
-                + '<ul>'
-                + '<li data-val="' + that.options.data.val + '" class="' + (that.options.data.checked ? 'checked' : '') + '" >'
-                + '<i></i>' + that.options.data.text
-                + '</li>'
-                + '</ul>'
-                + '</div>';
+      options = that.options,
+      data = options.data,
+      container = options.container,
+      htmlStr = 
+        '<div class="gcb-wrap ' + that.uniquecClass + '" >'
+        + '<ul>'
+        + '<li data-val="' + data.val + '" class="' + (data.checked ? 'checked' : '') + ' ' + (data.disabled ? 'disabled' : '') + '" >'
+        + '<i></i>' + data.text
+        + '</li>'
+        + '</ul>'
+        + '</div>';
     
-    that.options.container.html(htmlStr);
+    container.html(htmlStr);
 
-    if(that.options.parent) {
-      if(!(that.options.parent instanceof CheckBox)) {
-        throw new Error('Parent property isn\'t CheckBox');
+    if (options.parent) {
+      if (!(options.parent instanceof CheckBox)) {
+        throw new Error('parent属性必须为CheckBox类型');
       }
-      that.options.parent._child(that);
-      that._parent(that.options.parent);
+      options.parent._child(that);
+      that._parent(options.parent);
     } 
 
-    $(that.selector).on('click', function(){
-
-      var checked = !that.options.data.checked;
-
-      that.check(checked);
-
-      that.options.clickCallback && that.options.clickCallback(data, that.uniquecClass);
-
-      return false;
-
-    });
+    if (!options.disabled) {
+      $(that.selector).on('click', that.click);
+    }
 
     return this;
 
+  },
+  /**
+   * 让cbox点击失效
+   */
+  disabled: function() {
+
+    this.options.disabled = true;
+
+    $(this.selector).find('li').addClass('disabled');
+    $(this.selector).unbind('click');
+
+    return this;
+  },
+  /**
+   * 让cbox点击生效
+   */
+  enabled: function() {
+    
+    this.options.disabled = false;
+
+    $(this.selector).find('li').removeClass('disabled');
+    $(this.selector).unbind('click').on('click', this.click);
+
+    return this;
   },
   /**
    * 返回cbox是否被选中布尔值
    * 
    * @return {boolean} 是否被选中
    */
-  isChecked: function(){
+  isChecked: function() {
     return !!this.options.data.checked;
   },
   /**
@@ -123,7 +163,7 @@ CheckBox.prototype = {
    * 
    * @return {boolean} 是否没被选中
    */
-  isUnChecked: function(){
+  isUnChecked: function() {
     return !this.isChecked();
   },
   /**
@@ -132,7 +172,7 @@ CheckBox.prototype = {
    * @param {boolean} checked 是否被选中
    * @param {boolean} noFire 是否发送消息
    */
-  check: function(checked, noFire){
+  check: function(checked, noFire) {
 
     var $li = $(this.selector).find('li');
 
