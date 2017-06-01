@@ -127,6 +127,12 @@ CheckBox.prototype = {
 
   },
   /**
+   * @return {boolean} 是否失效
+   */
+  isDisabled: function() {
+    return !!this.options.disabled;
+  },
+  /**
    * 让cbox点击失效
    */
   disabled: function() {
