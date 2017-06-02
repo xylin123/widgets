@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>cbox</title>
+
+    <style>
+      .gcb-wrap li{
+        list-style: none;
+        background: url(./cb-unchecked.png) 0 center no-repeat;
+        padding-left: 16px;
+      }
+      .gcb-wrap li.checked{
+        background: url(./cb-checked.png) 0 center no-repeat;
+      }
+      .gcb-wrap {
+        cursor: pointer;
+        -moz-user-select:none;/*火狐*/
+        -webkit-user-select:none;/*webkit浏览器*/
+        -ms-user-select:none;/*IE10*/
+        -khtml-user-select:none;/*早期浏览器*/
+        user-select:none;
+      }
+    </style>  
+  </head>
+  <body>
+    <div class="cart">
+      <div class="cart-check-box"></div>
+      <div class="shop">
+        <div class="shop-check-box"></div>
+        <div class="sample">
+          <div class="sample-check-box"></div>
+        </div>
+        <div class="sample">
+          <div class="sample-check-box"></div>
+        </div>
+        <div class="sample">
+          <div class="sample-check-box"></div>
+        </div>
+      </div>
+      <div class="shop">
+        <div class="shop-check-box"></div>
+        <div class="sample">
+          <div class="sample-check-box"></div>
+        </div>
+        <div class="sample">
+          <div class="sample-check-box"></div>
+        </div>
+        <div class="sample">
+          <div class="sample-check-box"></div>
+        </div>
+      </div>
+      <div class="shop">
+        <div class="shop-check-box"></div>
+        <div class="sample">
+          <div class="sample-check-box"></div>
+        </div>
+        <div class="sample">
+          <div class="sample-check-box"></div>
+        </div>
+        <div class="sample">
+          <div class="sample-check-box"></div>
+        </div>
+      </div>
+    </div>
+    <script src="./lib/jquery-1.10.2.min.js"></script><!-- jQuery is required -->
+    <script src="./src/single.js"></script>   
+    <script>
+      $.each($('.cart'), function(i, cart) {
+
+        var cartBox = new CheckBox({container: $(cart).find('.cart-check-box'), data: {text: '购物车', val: ''}, disabled: true}).create();
+
+        $.each($(cart).find('.shop'), function(j, shop) {
+          var shopBox = new CheckBox({container: $(shop).find('.shop-check-box'), data: {text: '店店' + (++j), val: ''}, parent: cartBox}).create();
+
+            $.each($(shop).find('.sample'), function(k, sample) {
+              var sampleBox = new CheckBox({container: $(sample).find('.sample-check-box'), data: {text: '品品' + (++k), val: '', checked: true}, parent: shopBox}).create();
+            })
+
+        })
+      }); 
+    </script>
+  </body>
+</html>

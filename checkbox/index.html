@@ -24,60 +24,29 @@
   </head>
   <body>
     <div class="cart">
-      <div class="cart-check-box"></div>
-      <div class="shop">
-        <div class="shop-check-box"></div>
-        <div class="sample">
-          <div class="sample-check-box"></div>
-        </div>
-        <div class="sample">
-          <div class="sample-check-box"></div>
-        </div>
-        <div class="sample">
-          <div class="sample-check-box"></div>
-        </div>
-      </div>
-      <div class="shop">
-        <div class="shop-check-box"></div>
-        <div class="sample">
-          <div class="sample-check-box"></div>
-        </div>
-        <div class="sample">
-          <div class="sample-check-box"></div>
-        </div>
-        <div class="sample">
-          <div class="sample-check-box"></div>
-        </div>
-      </div>
-      <div class="shop">
-        <div class="shop-check-box"></div>
-        <div class="sample">
-          <div class="sample-check-box"></div>
-        </div>
-        <div class="sample">
-          <div class="sample-check-box"></div>
-        </div>
-        <div class="sample">
-          <div class="sample-check-box"></div>
-        </div>
-      </div>
+
     </div>
+    <bottom id="bbb">12121</bottom>
     <script src="./lib/jquery-1.10.2.min.js"></script><!-- jQuery is required -->
-    <script src="./src/single.js"></script>   
+    <script src="./src/index.js"></script>   
     <script>
-      $.each($('.cart'), function(i, cart) {
+      var data = [
+        {text: '浙江', val: 1},
+        {text: '江苏', val: 2},
+        {text: '福建', val: 3},
+        {text: '广东', val: 4},
+        {text: '广西', val: 5},
+        {text: '北京', val: 6},
+        {text: '黑龙江', val: 7},
+      ]
+      var cb = new CheckBox({container: $('.cart'), data: data, clickCallback: function(data, selector){
+        console.log(data, selector);
+      }}).create().checkByVal(2, true);
 
-        var cartBox = new CheckBox({container: $(cart).find('.cart-check-box'), data: {text: '购物车', val: ''}}).create();
-
-        $.each($(cart).find('.shop'), function(j, shop) {
-          var shopBox = new CheckBox({container: $(shop).find('.shop-check-box'), data: {text: '店店' + (++j), val: ''}, parent: cartBox}).create();
-
-            $.each($(shop).find('.sample'), function(k, sample) {
-              var sampleBox = new CheckBox({container: $(sample).find('.sample-check-box'), data: {text: '品品' + (++k), val: '', checked: true}, parent: shopBox}).create();
-            })
-
-        })
-      }); 
+      $('#bbb').on('click', function(){
+        console.log(cb.getCheckedItemsVal());
+        console.log(cb.getCheckedItems());
+      })
     </script>
   </body>
 </html>

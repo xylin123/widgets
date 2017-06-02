@@ -78,6 +78,10 @@ var CheckBox = function(options) {
   var that = this;
   this.click = function(){
 
+    if (that.options.disabled) {
+      return false;
+    }
+
     var checked = !that.options.data.checked;
 
     that.check(checked);
@@ -101,9 +105,9 @@ CheckBox.prototype = {
       data = options.data,
       container = options.container,
       htmlStr = 
-        '<div class="gcb-wrap ' + that.uniquecClass + '" >'
+        '<div class="gcb-wrap ' + that.uniquecClass + ' ' + (options.disabled ? 'disabled' : '') + '" >'
         + '<ul>'
-        + '<li data-val="' + data.val + '" class="' + (data.checked ? 'checked' : '') + ' ' + (data.disabled ? 'disabled' : '') + '" >'
+        + '<li data-val="' + data.val + '" class="' + (data.checked ? 'checked' : '') + '" >'
         + '<i></i>' + data.text
         + '</li>'
         + '</ul>'
@@ -119,9 +123,7 @@ CheckBox.prototype = {
       that._parent(options.parent);
     } 
 
-    if (!options.disabled) {
-      $(that.selector).on('click', that.click);
-    }
+    $(that.selector).on('click', that.click);
 
     return this;
 
@@ -139,8 +141,7 @@ CheckBox.prototype = {
 
     this.options.disabled = true;
 
-    $(this.selector).find('li').addClass('disabled');
-    $(this.selector).unbind('click');
+    $(this.selector).addClass('disabled');
 
     return this;
   },
@@ -151,8 +152,7 @@ CheckBox.prototype = {
     
     this.options.disabled = false;
 
-    $(this.selector).find('li').removeClass('disabled');
-    $(this.selector).unbind('click').on('click', this.click);
+    $(this.selector).removeClass('disabled');
 
     return this;
   },
